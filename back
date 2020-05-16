@@ -1,0 +1,271 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#define SIZE 1000
+#define TSIZE 100
+
+struct students {
+    char numb[TSIZE];
+    char second_name[TSIZE], first_name[TSIZE], patr[TSIZE];
+    char faculty[TSIZE], spec[TSIZE];
+    struct students *next;
+};
+
+static struct students *head = NULL;
+static int struct_size;
+
+void fill (struct students * p, char s[SIZE]);
+void add_student();
+void delete_student ();
+void backup ();
+void recovery();
+void search ();
+
+int main() {
+    FILE *fp;
+    int size = 0, choice, terminate = 0;
+    char str[SIZE];
+    struct students * current, *prev;
+    if ((fp = fopen("students.csv", "r")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл %s", "students.csv");
+        exit(EXIT_FAILURE);
+    };
+    while(fgets(str, SIZE, fp)) {
+        //реализация связного списка + заполнение данными из файла
+        current = (struct students *)malloc(sizeof(struct students));
+        fill(current, str);
+        if (head == NULL)
+            head = current;
+        else
+            prev->next = current;
+        current->next = NULL;
+        prev = current;
+        struct_size++;
+    }
+    fclose(fp);
+    puts("Выберите операцию:\n"
+    "1)Добавить студента\n"
+    "2)Удалить студента по номеру зачетной книжки\n"
+    "3)Бэкап\n"
+    "4)Восстановить базу из файла бэкапа\n"
+    "5)Поиск по фамилии\n"
+    "6)Завершить работу программы");
+    putchar('>');
+    while (scanf("%d", &choice)) {
+        getchar();
+        printf("\nSIZE %d\n", struct_size);
+        switch(choice){
+            case 1:
+                if (struct_size != 0) // если в читаемом файле есть данные
+                add_student(fp);
+                else{ //если читаемый файл пустой
+                    current = (struct students *)malloc(sizeof(struct students));
+                    head = current;
+                    current->next = NULL;
+                    add_student(fp);
+                }
+                break;
+            case 2:
+                delete_student();
+                break;
+            case 3:
+                backup();
+                break;
+            case 4:
+                recovery();
+                break;
+            case 5:
+                search();
+                break;
+            case 6:
+                terminate = 1;
+                puts("Работа программы завершена");
+                break;
+        }
+        if (terminate)
+            break;
+        putchar('>');
+    }
+    return 0;
+}
+
+void add_student(){
+    FILE *f;
+    if ((f = fopen("students.csv", "r+")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл students.csv");
+        exit(EXIT_FAILURE);
+    };
+    fseek(f, 0L, SEEK_END);
+    int i = 0, j, exit = 0;
+    int punct_count = 0;
+    char info[SIZE], first_word[TSIZE];
+    puts("Введите данные студента через точку с запятой (Пример: 123456;Иванов;Иван;Иванович;ФН;\"Математика\"):");
+    fgets(info, SIZE, stdin);
+//    first_word = strtok(info, "; ");
+    for (int k = 0; k < strlen(info); k++){
+        if (info[k] != ';' && exit == 0){
+            first_word[i++] = info[k];
+        }
+        else if (info[k] == ';') {
+            exit = 1;
+            punct_count++;
+        }
+    }
+    first_word[i] = '\0';
+    if (punct_count != 5){
+        puts("Должно быть 6 значений\n--Завершение функции--");
+        return;
+    }
+    for (j = 0; j < struct_size; j++){
+        if (strcmp(first_word, (head + j)->numb) == 0){
+            puts("Такой студент уже существует\n--Завершение функции--");
+            return;
+        }
+    }
+    fill(head + (struct_size - 1), info);
+    fprintf(f, "%s", info);
+    fclose(f);
+    puts("Ученик добавлен");
+}
+
+void delete_student (){
+    int i, j;
+    FILE *f;
+    struct students *iterator;
+    char number[TSIZE], first_word[TSIZE];
+    char info[SIZE];
+    if ((f = fopen("students.csv", "w")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл students.csv");
+        exit(EXIT_FAILURE);
+    }
+    if (struct_size != 0){
+        puts("Введите номер зачетной книжки:");
+        if (scanf("%s", number)){
+            for (i = 0; i < struct_size; i++){
+                if (strcmp(number, (head + i)->numb) == 0){
+                    if (i == 0 && struct_size == 1){
+                        head = NULL;
+                    }
+                    else if (i == 0 && struct_size >= 2){
+                        head = (head + 1);
+                    }
+                    else if (i == struct_size - 1){
+                        (head + (i - 1))->next = NULL;
+                    }
+                    else{
+                        (head + (i - 1))->next = (head + (i + 1));
+                        (head + i)->next = NULL;
+                    }
+//                    memset((head + i), 0, sizeof(*(head + i)));
+                    struct_size--;
+                    puts("Ученик удален");
+                }
+            }
+//            if (head != NULL) {
+//                iterator = head;
+//                printf("%s;%s;%s;%s;%s;%s\n", iterator->numb, iterator->second_name, iterator->first_name,
+//                        iterator->patr, iterator->faculty, iterator->spec);
+//                while ((iterator = iterator->next) != NULL){
+//                    printf("%s;%s;%s;%s;%s;%s\n", iterator->numb, iterator->second_name, iterator->first_name,
+//                            iterator->patr, iterator->faculty, iterator->spec);
+//                }
+//            }
+        }
+        else{
+            fprintf(stderr, "Неправильный ввод\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+    else{
+        printf("В читаемом файле нету данных\n--Завершение функции--\n");
+        return;
+    }
+}
+
+void backup (){
+    int ch;
+    struct tm *loc_time;
+    char time_ar[TSIZE];
+    const time_t ttime = time(NULL);
+    loc_time = localtime(&ttime);
+    strftime(time_ar, 50, "%d.%m.%Y_%H:%M:%S", loc_time);
+    char filename[TSIZE] = "students_";
+    strcat(filename, time_ar);
+    strcat(filename, ".csv");
+    FILE *in, *out;
+    if ((in = fopen(filename, "w")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл %s", filename);
+        exit(EXIT_FAILURE);
+    };
+    if ((out = fopen("students.csv", "r")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл students.csv");
+        exit(EXIT_FAILURE);
+    };
+    while ((ch = getc(out)) != EOF)
+        putc(ch, in);
+    puts("Операция прошла успешно");
+    fclose(in), fclose(out);
+}
+
+void recovery(){
+    int ch;
+    char filename[TSIZE];
+    FILE *in, *out;
+    struct_size = 0;
+    puts("Введите название файла бэкапа (Пример: students_15.05.2020_17:35:27.csv):");
+    scanf("%s", filename);
+    if ((in = fopen("students.csv", "w")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл students.csv");
+        exit(EXIT_FAILURE);
+    };
+    if ((out = fopen(filename, "r")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл %s", filename);
+        exit(EXIT_FAILURE);
+    };
+    while ((ch = getc(out)) != EOF)
+        if (ch == '\n')
+            struct_size++;
+        putc(ch, in);
+    puts("Операция прошла успешно");
+    fclose(in), fclose(out);
+}
+
+void search (){
+    char surname[TSIZE];
+    puts("Введите фамилию:");
+    scanf("%s", surname);
+    for (int i = 0; (head + i); i++){
+        if (strcmp(surname, (head + i)->second_name) == 0)
+            printf("%s %s %s %s %s %s\n", (head + i)->numb, (head + i)->second_name, (head + i)->first_name,
+                   (head + i)->patr, (head + i)->faculty, (head + i)->spec);
+    }
+}
+
+//функция считывания данных из файла, разделеныных точкой с запятой
+void fill (struct students * p, char s[SIZE]){
+    int i = 0, j = 0;
+    int nametag = 0;
+    char ar[SIZE];
+    while((ar[i] = s[j])){
+        if (s[j] == ';' || s[j] == '\n'){
+            ar[i] = '\0';
+            if (nametag == 0)
+                strcpy(p->numb, ar);
+            else if (nametag == 1)
+                strcpy(p->second_name, ar);
+            else if (nametag == 2)
+                strcpy(p->first_name, ar);
+            else if (nametag == 3)
+                strcpy(p->patr, ar);
+            else if (nametag == 4)
+                strcpy(p->faculty, ar);
+            else if (nametag == 5)
+                strcpy(p->spec, ar);
+            nametag++, i = 0, j++;
+        }
+        else {
+            i++, j++;
+        }
+    }
+}
