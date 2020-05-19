@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#define SIZE 1000
+#define SIZE 600
 #define TSIZE 100
 
 struct students {
@@ -12,8 +12,8 @@ struct students {
     struct students *next;
 };
 
-static struct students *head = NULL;
-static int struct_size;
+struct students *head = NULL;
+int students_struct_size;
 
 void fill (struct students * p, char s[SIZE]);
 void add_student();
@@ -22,17 +22,17 @@ void backup ();
 void recovery();
 void search ();
 
-int main() {
+int main(){
     FILE *fp;
     int size = 0, choice, terminate = 0;
     char str[SIZE];
-    struct students * current, *prev;
+    struct students * current;
     if ((fp = fopen("students.csv", "r")) == NULL){
         fprintf(stderr, "Не удалось открыть файл %s", "students.csv");
         exit(EXIT_FAILURE);
     };
     while(fgets(str, SIZE, fp)) {
-        struct_size++;
+        students_struct_size++;
         //реализация связного списка + заполнение данными из файла
         current = (struct students *)malloc(sizeof(struct students));
         fill(current, str);
@@ -50,7 +50,7 @@ int main() {
         getchar();
 //        =====================================
         struct students *iterator = head;
-        for (int i = 0; i < struct_size; i++){
+        for (int i = 0; i < students_struct_size; i++){
             printf("%s;%s;%s;%s;%s;%s\n", iterator->numb, iterator->second_name, iterator->first_name,
                    iterator->patr, iterator->faculty, iterator->spec);
             iterator = iterator->next;
@@ -58,7 +58,7 @@ int main() {
 //        =====================================
         switch(choice){
             case 1:
-                add_student(fp);
+                add_student();
                 break;
             case 2:
                 delete_student();
@@ -102,9 +102,8 @@ void add_student(){
         exit(EXIT_FAILURE);
     };
     fseek(f, 0L, SEEK_END);
-    puts("Введите данные студента через точку с запятой (Пример: 123456;Иванов;Иван;Иванович;ФН;\"Математика\"):");
+    puts("Введите данные студента через точку с запятой без пробела (Пример: 123456;Иванов;Иван;Иванович;ФН;\"Математика\"):");
     fgets(info, SIZE, stdin);
-//    first_word = strtok(info, "; ");
     for (int k = 0; k < strlen(info); k++){
         if (info[k] != ';' && find == 0){
             first_word[i++] = info[k];
@@ -120,14 +119,14 @@ void add_student(){
         return;
     }
     iterator = head;
-    for (j = 0; j < struct_size; j++){
+    for (j = 0; j < students_struct_size; j++){
         if (strcmp(first_word, iterator->numb) == 0){
             puts("Такой студент уже существует\n--Завершение функции--");
             return;
         }
         iterator = iterator->next;
     }
-    struct_size++;
+    students_struct_size++;
     current = (struct students*)malloc(sizeof(struct students));
     fill(current, info);
     fprintf(f, "%s", info);
@@ -145,23 +144,23 @@ void delete_student (){
         fprintf(stderr, "Не удалось открыть файл students.csv");
         exit(EXIT_FAILURE);
     }
-    if (struct_size != 0){
+    if (students_struct_size != 0){
         puts("Введите номер зачетной книжки:");
         if (scanf("%s", number)){
-            for (i = 0; i < struct_size; i++){
+            for (i = 0; i < students_struct_size; i++){
                 if (strcmp(number, iterator1->numb) == 0){
-                    if (i == 0 && struct_size == 1){
+                    if (i == 0 && students_struct_size == 1){
                         head = NULL;
                     }
-                    else if (i == 0 && struct_size >= 2){
+                    else if (i == 0 && students_struct_size >= 2){
                         head = iterator1->next;
                     }
-                    else if (i == struct_size - 1){
+                    else if (i == students_struct_size - 1){
                         prev->next = NULL;
                     }
                     else
                         prev->next = iterator1->next;
-                    struct_size--;
+                    students_struct_size--;
                     puts("Студент удален");
                     break;
                 }
@@ -170,7 +169,7 @@ void delete_student (){
             }
             if (head != NULL) {
                 iterator2 = head;
-                for (j = 0; j < struct_size; j++){
+                for (j = 0; j < students_struct_size; j++){
                     fprintf(f, "%s;%s;%s;%s;%s;%s\n", iterator2->numb, iterator2->second_name, iterator2->first_name,
                             iterator2->patr, iterator2->faculty, iterator2->spec);
                     iterator2 = iterator2->next;
@@ -220,7 +219,7 @@ void recovery(){
     char str[SIZE];
     struct students *current;
     FILE *in, *out;
-    struct_size = 0;
+    students_struct_size = 0;
     puts("Введите название файла бэкапа (Пример: students_15.05.2020_17:35:27.csv):");
     scanf("%s", filename);
     if ((in = fopen("students.csv", "w+")) == NULL){
@@ -233,7 +232,7 @@ void recovery(){
     };
     while ((ch = getc(out)) != EOF) {
         if (ch == '\n')
-            struct_size++;
+            students_struct_size++;
         putc(ch, in);
     }
     fseek(in, 0L, SEEK_SET);
@@ -251,7 +250,7 @@ void search (){
     struct students *iterator = head;
     puts("Введите фамилию:");
     scanf("%s", surname);
-    for (int i = 0; i < struct_size; i++){
+    for (int i = 0; i < students_struct_size; i++){
         if (strcmp(surname, iterator->second_name) == 0) {
             printf("%s %s %s %s %s %s\n", iterator->numb, iterator->second_name, iterator->first_name,
                    iterator->patr, iterator->faculty, iterator->spec);
@@ -269,12 +268,13 @@ void fill (struct students * p, char s[SIZE]){
     int nametag = 0;
     char ar[SIZE];
     struct students* ps = head;
+    char *pa;
 
     if (head == NULL) {
         head = p;
     }
     else{
-        for (int i = 0; i < (struct_size - 2); i++) {
+        for (int k = 0; k < (students_struct_size - 2); k++) {
             ps = ps->next;
         }
         ps->next = p;
