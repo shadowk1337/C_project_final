@@ -19,6 +19,7 @@ extern int students_struct_size;
 
 void fill (struct students * p, char s[SIZE]);
 
+//Добавление
 void add_student(){
     FILE *f;
     struct students *current, *iterator;
@@ -62,19 +63,36 @@ void add_student(){
     puts("Студент добавлен");
 }
 
+//Удаление
 void delete_student (){
     int i, j;
-    FILE *f;
+    FILE *f, *check;
+    char *id = (char *)malloc(7 * sizeof(char));
+
     struct students *iterator1 = students_head, *prev, *iterator2;
     char number[TSIZE], first_word[TSIZE];
     char info[SIZE];
-    if ((f = fopen("students.csv", "w")) == NULL){
-        fprintf(stderr, "Не удалось открыть файл students.csv");
+    if ((check = fopen("student_books.csv", "r")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл student_books.csv");
         exit(EXIT_FAILURE);
     }
     if (students_struct_size != 0){
+        //проверка номера студента в файле students_books
         puts("Введите номер зачетной книжки:");
         if (scanf("%s", number)){
+            while (fgets(info, SIZE, check)) {
+                id = strtok(info, ";");
+                id = strtok(NULL, ";");
+                if (strcmp(number, id) == 0) {
+                    printf("Нельзя удалить студента с номером %s\n", number);
+                    return;
+                }
+            }
+            fclose(check);
+            if ((f = fopen("students.csv", "w")) == NULL){
+                fprintf(stderr, "Не удалось открыть файл students.csv");
+                exit(EXIT_FAILURE);
+            }
             for (i = 0; i < students_struct_size; i++){
                 if (strcmp(number, iterator1->numb) == 0){
                     if (i == 0 && students_struct_size == 1){
@@ -103,6 +121,7 @@ void delete_student (){
                     iterator2 = iterator2->next;
                 }
             }
+            fclose(f);
         }
         else{
             fprintf(stderr, "Неправильный ввод\n");
@@ -113,9 +132,9 @@ void delete_student (){
         printf("В читаемом файле нету данных\n--Завершение функции--\n");
         return;
     }
-    fclose(f);
 }
 
+//Бэкап
 void backup (){
     int ch;
     struct tm *loc_time;
@@ -141,6 +160,7 @@ void backup (){
     fclose(in), fclose(out);
 }
 
+//Восстановление содержимого
 void recovery(){
     int ch;
     char filename[TSIZE];
@@ -150,12 +170,12 @@ void recovery(){
     students_struct_size = 0;
     puts("Введите название файла бэкапа (Пример: students_15.05.2020_17:35:27.csv):");
     scanf("%s", filename);
-    if ((in = fopen("students.csv", "w+")) == NULL){
-        fprintf(stderr, "Не удалось открыть файл students.csv");
-        exit(EXIT_FAILURE);
-    };
     if ((out = fopen(filename, "r")) == NULL){
         fprintf(stderr, "Не удалось открыть файл %s", filename);
+        exit(EXIT_FAILURE);
+    };
+    if ((in = fopen("students.csv", "w+")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл students.csv");
         exit(EXIT_FAILURE);
     };
     while ((ch = getc(out)) != EOF) {
@@ -172,6 +192,7 @@ void recovery(){
     fclose(in), fclose(out);
 }
 
+//Поиск по фамилии
 void search (){
     int found = 0;
     char surname[TSIZE];
@@ -188,6 +209,47 @@ void search (){
     }
     if (found == 0)
         printf("Студента с фамилией %s не найдено\n", surname);
+}
+
+//Поиск по номеру зачетки
+void search_id (){
+    FILE *f, *check;
+    char id[TSIZE], info[SIZE];
+    char info_books[SIZE];
+    char *isbn, *number, *isbn_in_books, *date;
+    puts("Введите номер зачетки");
+    if (scanf("%s", id)){
+        if ((check = fopen("student_books.csv", "r")) == NULL){
+            fprintf(stderr, "Не удалось открыть файл books.csv");
+            exit(EXIT_FAILURE);
+        }
+        if ((f = fopen("books.csv", "r")) == NULL){
+            fprintf(stderr, "Не удалось открыть файл books.csv");
+            exit(EXIT_FAILURE);
+        }
+        while (fgets(info, SIZE, check)){
+            isbn = strtok(info, ";");
+            number = strtok(NULL, ";");
+            date = strtok(NULL, ";");
+            if (strcmp(number, id) == 0){
+                while (fgets(info_books, SIZE, f)){
+                    isbn_in_books = strtok(info_books, ";");
+                    if (strcmp(isbn, isbn_in_books) == 0){
+                        while (isbn_in_books != NULL){
+                            printf("%s ", isbn_in_books);
+                            isbn_in_books = strtok(NULL, ";");
+                        }
+                        printf("%s\n", date);
+                    }
+                }
+            }
+            fseek(f, 0L, SEEK_SET);
+        }
+        fclose(f);
+        fclose(check);
+    }
+    else
+        puts("Неправильный ввод");
 }
 
 //функция считывания данных из файла, разделеныных точкой с запятой
