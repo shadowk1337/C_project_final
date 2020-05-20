@@ -62,18 +62,31 @@ void add_book (){
 }
 
 void delete_book(){
-    FILE *f;
+    FILE *f, *check;
     int i, j;
+    char *isbn = (char *)malloc(11 * sizeof(char));
     struct books *iterator1 = books_head, *prev, *iterator2;
     char number[TSIZE], first_word[TSIZE];
     char info[SIZE];
-    if ((f = fopen("books.csv", "w")) == NULL){
-        fprintf(stderr, "Не удалось открыть файл books.csv");
+    if ((check = fopen("student_books.csv", "r")) == NULL){
+        fprintf(stderr, "Не удалось открыть файл student_books.csv");
         exit(EXIT_FAILURE);
     }
     if (books_struct_size != 0){
         puts("Введите номер ISBN книги:");
         if (scanf("%s", number)){
+            while (fgets(info, SIZE, check)) {
+                isbn = strtok(info, ";");
+                if (strcmp(number, isbn) == 0) {
+                    printf("Нельзя удалить книгу с номером %s\n", number);
+                    return;
+                }
+            }
+            fclose(check);
+            if ((f = fopen("books.csv", "w")) == NULL){
+                fprintf(stderr, "Не удалось открыть файл books.csv");
+                exit(EXIT_FAILURE);
+            }
             for (i = 0; i < books_struct_size; i++){
                 if (strcmp(number, iterator1->isbn) == 0){
                     if (i == 0 && books_struct_size == 1){
@@ -102,6 +115,7 @@ void delete_book(){
                     iterator2 = iterator2->next;
                 }
             }
+            fclose(f);
         }
         else{
             fprintf(stderr, "Неправильный ввод\n");
@@ -112,7 +126,6 @@ void delete_book(){
         printf("В читаемом файле нету данных\n--Завершение функции--\n");
         return;
     }
-    fclose(f);
 }
 
 void search_book (){
@@ -149,6 +162,45 @@ void print_book (){
                iterator->books_count, iterator->students_count);
         iterator = iterator->next;
     }
+}
+
+//Поиск по ISBN
+void search_isbn(){
+    FILE *f, *check;
+    char book_id[TSIZE], info[TSIZE];
+    char info_students[TSIZE];
+    char *isbn, *number, *id_in_students, *date;
+    puts("Введите ISBN книги");
+    if (scanf("%s", book_id)){
+        if ((check = fopen("student_books.csv", "r")) == NULL){
+            fprintf(stderr, "Не удалось открыть файл books.csv");
+            exit(EXIT_FAILURE);
+        }
+        if ((f = fopen("students.csv", "r")) == NULL){
+            fprintf(stderr, "Не удалось открыть файл students.csv");
+            exit(EXIT_FAILURE);
+        }
+        while (fgets(info, SIZE, check)){
+            isbn = strtok(info, ";");
+            number = strtok(NULL, ";");
+            date = strtok(NULL, ";");
+            if (strcmp(book_id, isbn) == 0){
+                while (fgets(info_students, SIZE, f)){
+                    id_in_students = strtok(info_students, ";");
+                    if (strcmp(id_in_students, number) == 0){
+                        while (id_in_students != NULL){
+                            printf("%s ", id_in_students);
+                            id_in_students = strtok(NULL, ";");
+                        }
+                        printf("%s\n", date);
+                    }
+                }
+            }
+            fseek(f, 0L, SEEK_SET);
+        }
+    }
+    else
+        puts("Неправильный ввод");
 }
 
 void fill_books(struct books *p, char s[SIZE]){
