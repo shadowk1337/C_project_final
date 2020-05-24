@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "log.h"
 //#define SIZE 500
 //#define TSIZE 100
 
@@ -27,10 +28,11 @@ void add_book (){
     char info[SIZE], first_word[TSIZE];
     if ((f = fopen("books.csv", "r+")) == NULL){
         fprintf(stderr, "Не удалось открыть файл books.csv\n");
+        print_log(login, "EEE Не удалось открыть файл books.csv", "\0");
         exit(EXIT_FAILURE);
     }
     fseek(f, 0L, SEEK_END);
-    puts("Введине информацию о книге через точку с запятой без пробела (Пример: 9666965348;Стругацкие;Град обреченный;10;5):");
+    puts("Введите информацию о книге через точку с запятой без пробела (Пример: 9666965348;Стругацкие;Град обреченный;10;5):");
     fgets(info, SIZE, stdin);
     for (int k = 0; k < strlen(info); k++){
         if (info[k] != ';' && find == 0){
@@ -43,12 +45,14 @@ void add_book (){
     }
     first_word[i] = '\0';
     if (punct_count != 4){
-        puts("Должно быть 6 значений\n--Завершение функции--");
+        puts("Должно быть 5 значений\n--Завершение функции--");
         return;
     }
+    print_log(login, "CCC add_book", info);
     for (int j = 0; j < books_struct_size; j++){
         if (strcmp(first_word, iterator->isbn) == 0){
             puts("Такая книга уже существует\n--Завершение функции--");
+            print_log(login, "WWW Такая книга уже существует --Завершение функции--", "\0");
             return;
         }
         iterator = iterator->next;
@@ -59,6 +63,7 @@ void add_book (){
     fprintf(f, "%s", info);
     fclose(f);
     puts("Книга добавлена");
+    print_log(login, "SSS Книга добавлена", "\0");
 }
 
 void delete_book(){
@@ -70,21 +75,25 @@ void delete_book(){
     char info[SIZE];
     if ((check = fopen("student_books.csv", "r")) == NULL){
         fprintf(stderr, "Не удалось открыть файл student_books.csv");
+        print_log(login, "EEE Не удалось открыть файл student_books.csv", "\0");
         exit(EXIT_FAILURE);
     }
     if (books_struct_size != 0){
         puts("Введите номер ISBN книги:");
         if (scanf("%s", number)){
+            print_log(login, "CCC delete_book", number);
             while (fgets(info, SIZE, check)) {
                 isbn = strtok(info, ";");
                 if (strcmp(number, isbn) == 0) {
                     printf("Нельзя удалить книгу с номером %s\n", number);
+                    print_log(login, "WWW Нельзя удалить книгу с номером ", number);
                     return;
                 }
             }
             fclose(check);
             if ((f = fopen("books.csv", "w")) == NULL){
                 fprintf(stderr, "Не удалось открыть файл books.csv");
+                print_log(login, "EEE Не удалось открыть файл books.csv", "\0");
                 exit(EXIT_FAILURE);
             }
             for (i = 0; i < books_struct_size; i++){
@@ -102,6 +111,7 @@ void delete_book(){
                         prev->next = iterator1->next;
                     books_struct_size--;
                     puts("Книга удалена");
+                    print_log(login, "SSS Книга удалена", "\0");
                     break;
                 }
                 prev = iterator1;
@@ -119,11 +129,13 @@ void delete_book(){
         }
         else{
             fprintf(stderr, "Неправильный ввод\n");
+            print_log(login, "WWW Неправильный ввод", "\0");
             exit(EXIT_FAILURE);
         }
     }
     else{
         printf("В читаемом файле нету данных\n--Завершение функции--\n");
+        print_log(login, "WWW В читаемом файле нету данных --Завершение функции--", "\0");
         return;
     }
 }
@@ -134,10 +146,12 @@ void search_book (){
     struct books *iterator = books_head;
     if (books_struct_size == 0){
         printf("В читаемом файле нету данных\n--Завершение функции--\n");
+        print_log(login, "WWW В читаемом файле нету данных --Завершение функции--", "\0");
         return;
     }
     puts("Введите ISBN:");
     scanf("%s", isbn);
+    print_log(login, "CCC search_book", isbn);
     for (int i = 0; i < books_struct_size; i++){
         if (strcmp(isbn, iterator->isbn) == 0) {
             printf("%s %s %s %d %d\n", iterator->isbn, iterator->author, iterator->name,
@@ -146,19 +160,25 @@ void search_book (){
         }
         iterator = iterator->next;
     }
-    if (found == 0)
+    if (found == 0) {
+        char ar_to_write[AR_SIZE] = "Книги с ISBN ";
+        strcat(ar_to_write, isbn);
+        strcat(ar_to_write, " не найдено\n");
         printf("Книги с ISBN %s не найдено\n", isbn);
+        print_log(login, ar_to_write, "\0");
+    }
 }
 
 void print_book (){
     if (books_struct_size == 0){
         printf("В читаемом файле нету данных\n--Завершение функции--\n");
+        print_log(login, "WWW В читаемом файле нету данных --Завершение функции--", "\0");
         return;
     }
     struct books *iterator = books_head;
-    printf("%7s %s %s %s %s\n", "ISBN", "Автор", "Название", "Кол-во книг", "У ск-ких студентов");
+    printf("%8s %30s %20s %25s %30s\n", "ISBN", "Автор", "Название", "Кол-во книг", "У ск-ких студентов");
     for (int i = 0; i < books_struct_size; i++){
-        printf("%s | %s | %s | %d | %d\n", iterator->isbn, iterator->author, iterator->name,
+        printf(" %s\t%10s\t%20s\t%25d\t%30d\n", iterator->isbn, iterator->author, iterator->name,
                iterator->books_count, iterator->students_count);
         iterator = iterator->next;
     }
@@ -172,12 +192,15 @@ void search_isbn(){
     char *isbn, *number, *id_in_students, *date;
     puts("Введите ISBN книги");
     if (scanf("%s", book_id)){
+        print_log(login, "CCC search_book_isbn", book_id);
         if ((check = fopen("student_books.csv", "r")) == NULL){
             fprintf(stderr, "Не удалось открыть файл books.csv");
+            print_log(login, "EEE Не удалось открыть файл books.csv", "\0");
             exit(EXIT_FAILURE);
         }
         if ((f = fopen("students.csv", "r")) == NULL){
             fprintf(stderr, "Не удалось открыть файл students.csv");
+            print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
             exit(EXIT_FAILURE);
         }
         while (fgets(info, SIZE, check)){
@@ -199,8 +222,10 @@ void search_isbn(){
             fseek(f, 0L, SEEK_SET);
         }
     }
-    else
+    else {
         puts("Неправильный ввод");
+        print_log(login, "WWW Неправильный ввод", "\0");
+    }
 }
 
 void fill_books(struct books *p, char s[SIZE]){
