@@ -5,10 +5,12 @@
 #include "binary_tree.h"
 #include "students.h"
 #include "books.h"
+#include "log.h"
 #define SIZE 600
 #define TSIZE 100
 
 int auth(Tnode *);
+char login[TSIZE];
 
 Users *account;
 struct students *students_head = NULL;
@@ -24,6 +26,7 @@ int main() {
     int vip, comeback = 1;
     if ((fp = fopen("users.csv", "r")) == NULL) {
         fprintf(stderr, "Не удалось открыть файл users.csv");
+        print_log("unauthorized", "EEE Не удалось открыть файл users.csv", "\0");
         exit(EXIT_FAILURE);
     }
     while (fgets(s, SIZE, fp)) {
@@ -44,8 +47,10 @@ int main() {
                 } else if (choice == 2) {
                     vip = 2;
                     break;
-                } else
+                } else{
                     puts("Неправильный ввод");
+                    print_log(login, "WWW Неправильный ввод", "\0");
+                }
             }
         }
         //1;0
@@ -53,6 +58,7 @@ int main() {
             struct students *current;
             if ((fp = fopen("students.csv", "r")) == NULL) {
                 fprintf(stderr, "Не удалось открыть файл %s", "students.csv");
+                print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
                 exit(EXIT_FAILURE);
             };
             while (fgets(str, SIZE, fp)) {
@@ -77,28 +83,37 @@ int main() {
                 getchar();
                 switch (choice) {
                     case 1:
+                        print_log(login, "add_student", "\0");
                         add_student();
                         break;
                     case 2:
+                        print_log(login, "delete_student", "\0");
                         delete_student();
                         break;
                     case 3:
+                        print_log(login, "backup", "\0");
                         backup();
                         break;
                     case 4:
+                        print_log(login, "recovery", "\0");
                         recovery();
                         break;
                     case 5:
+                        print_log(login, "search_student", "\0");
                         search();
                         break;
                     case 6:
+                        print_log(login, "search_student_id", "\0");
                         search_id();
                         break;
                     case 7:
+                        print_log(login, "terminate_student_program", "\0");
+                        print_log(login, "SSS Работа программы завершена", "\0");
                         terminate = 1;
                         puts("Работа программы завершена");
                         break;
                     case 0:
+                        print_log(login, "сomeback_to_choosing_menu", "\0");
                         comeback = 1;
                         terminate = 1;
                         break;
@@ -121,6 +136,7 @@ int main() {
             struct books *current;
             if ((fp = fopen("books.csv", "r")) == NULL) {
                 fprintf(stderr, "Не удалось открыть файл books.csv\n");
+                print_log(login, "EEE Не удалось открыть файл books.csv", "\0");
                 exit(EXIT_FAILURE);
             }
             while (fgets(str, SIZE, fp)) {
@@ -142,25 +158,33 @@ int main() {
                 getchar();
                 switch (choice) {
                     case 1:
+                        print_log(login, "add_book", "\0");
                         add_book();
                         break;
                     case 2:
+                        print_log(login, "delete_book", "\0");
                         delete_book();
                         break;
                     case 3:
+                        print_log(login, "search_book", "\0");
                         search_book();
                         break;
                     case 4:
+                        print_log(login, "print_book", "\0");
                         print_book();
                         break;
                     case 5:
+                        print_log(login, "search_book_isbn", "\0");
                         search_isbn();
                         break;
                     case 6:
+                        print_log(login, "termianate_book_program", "\0");
+                        print_log(login, "SSS Работа программы завершена", "\0");
                         terminate = 1;
                         puts("Работа программы завершена");
                         break;
                     case 0:
+                        print_log(login, "сomeback_to_choosing_menu", "\0");
                         comeback = 1;
                         terminate = 1;
                         break;
@@ -178,8 +202,11 @@ int main() {
                     puts("0)Вернуться в меню выбора");
                 printf("> ");
             }
-        } else
+        }
+        else {
             puts("Аккаунт не имеет привилегий");
+            print_log("unauthorized", "SSS Аккаунт не имеет привилегий", "\0");
+        }
     }
 }
 
@@ -189,7 +216,7 @@ int auth(Tnode *ps){
     int *status = (int *)malloc(sizeof(int));
     Users *acc_info = (Users *)malloc(sizeof(Users));
     *status = 0;
-    char login[TSIZE], password[TSIZE];
+    char password[TSIZE];
     puts("Введите логин:");
     scanf("%s", login);
     puts("Введите пароль:");
@@ -197,10 +224,12 @@ int auth(Tnode *ps){
     acc_info = find_acc(ps, login, password, status);
     if (*status) {
         puts("Вы авторизированы");
+        print_log(login, "================ SSS Вы авторизованы ================", "\0");
         account = acc_info;
         return 1;
     }
     puts("Неправильный логин/пароль");
+    print_log("unauthorized", "WWW Неправильный логин/пароль", "\0");
     return 0;
 }
 
