@@ -1,9 +1,11 @@
 #ifndef HOM1_STUDENTS_H
 #define HOM1_STUDENTS_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "log.h"
 #define SIZE 600
 #define TSIZE 100
 
@@ -16,6 +18,7 @@ struct students {
 
 extern struct students *students_head;
 extern int students_struct_size;
+extern char login[TSIZE];
 
 void fill (struct students * p, char s[SIZE]);
 
@@ -28,6 +31,7 @@ void add_student(){
     char info[SIZE], first_word[TSIZE];
     if ((f = fopen("students.csv", "r+")) == NULL){
         fprintf(stderr, "Не удалось открыть файл students.csv");
+        print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
         exit(EXIT_FAILURE);
     };
     fseek(f, 0L, SEEK_END);
@@ -45,12 +49,15 @@ void add_student(){
     first_word[i] = '\0';
     if (punct_count != 5){
         puts("Должно быть 6 значений\n--Завершение функции--");
+        print_log(login, "WWW Должно быть 6 значений --Завершение функции--", "\0");
         return;
     }
+    print_log(login, "CCC add_student", info);
     iterator = students_head;
     for (j = 0; j < students_struct_size; j++){
         if (strcmp(first_word, iterator->numb) == 0){
             puts("Такой студент уже существует\n--Завершение функции--");
+            print_log(login, "WWW Такой студент уже существует --Завершение функции--", "\0");
             return;
         }
         iterator = iterator->next;
@@ -61,6 +68,7 @@ void add_student(){
     fprintf(f, "%s", info);
     fclose(f);
     puts("Студент добавлен");
+    print_log(login, "SSS Студент добавлен", "\0");
 }
 
 //Удаление
@@ -74,23 +82,27 @@ void delete_student (){
     char info[SIZE];
     if ((check = fopen("student_books.csv", "r")) == NULL){
         fprintf(stderr, "Не удалось открыть файл student_books.csv");
+        print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
         exit(EXIT_FAILURE);
     }
     if (students_struct_size != 0){
         //проверка номера студента в файле students_books
         puts("Введите номер зачетной книжки:");
         if (scanf("%s", number)){
+            print_log(login, "CCC delete_student", number);
             while (fgets(info, SIZE, check)) {
                 id = strtok(info, ";");
                 id = strtok(NULL, ";");
                 if (strcmp(number, id) == 0) {
                     printf("Нельзя удалить студента с номером %s\n", number);
+                    print_log(login, "WWW Нельзя удалить студента с номером ", number);
                     return;
                 }
             }
             fclose(check);
             if ((f = fopen("students.csv", "w")) == NULL){
                 fprintf(stderr, "Не удалось открыть файл students.csv");
+                print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
                 exit(EXIT_FAILURE);
             }
             for (i = 0; i < students_struct_size; i++){
@@ -108,6 +120,7 @@ void delete_student (){
                         prev->next = iterator1->next;
                     students_struct_size--;
                     puts("Студент удален");
+                    print_log(login, "SSS Студент удален", "\0");
                     break;
                 }
                 prev = iterator1;
@@ -125,11 +138,13 @@ void delete_student (){
         }
         else{
             fprintf(stderr, "Неправильный ввод\n");
+            print_log(login, "WWW Неправильный ввод", "\0");
             exit(EXIT_FAILURE);
         }
     }
     else{
         printf("В читаемом файле нету данных\n--Завершение функции--\n");
+        print_log(login, "WWW В читаемом файле нету данных --Завершение функции--\n", "\0");
         return;
     }
 }
@@ -148,15 +163,18 @@ void backup (){
     FILE *in, *out;
     if ((in = fopen(filename, "w")) == NULL){
         fprintf(stderr, "Не удалось открыть файл %s", filename);
+        print_log(login, "EEE Не удалось открыть файл ", filename);
         exit(EXIT_FAILURE);
     };
     if ((out = fopen("students.csv", "r")) == NULL){
         fprintf(stderr, "Не удалось открыть файл students.csv");
+        print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
         exit(EXIT_FAILURE);
     };
     while ((ch = getc(out)) != EOF)
         putc(ch, in);
     puts("Операция прошла успешно");
+    print_log(login, "SSS Операция прошла успешно", "\0");
     fclose(in), fclose(out);
 }
 
@@ -170,12 +188,15 @@ void recovery(){
     students_struct_size = 0;
     puts("Введите название файла бэкапа (Пример: students_15.05.2020_17:35:27.csv):");
     scanf("%s", filename);
+    print_log(login, "CCC recovery", filename);
     if ((out = fopen(filename, "r")) == NULL){
         fprintf(stderr, "Не удалось открыть файл %s", filename);
+        print_log(login, "EEE Не удалось открыть файл ", filename);
         exit(EXIT_FAILURE);
     };
     if ((in = fopen("students.csv", "w+")) == NULL){
         fprintf(stderr, "Не удалось открыть файл students.csv");
+        print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
         exit(EXIT_FAILURE);
     };
     while ((ch = getc(out)) != EOF) {
@@ -189,6 +210,7 @@ void recovery(){
         fill(current, str);
     }
     puts("Операция прошла успешно");
+    print_log(login, "SSS Операция прошла успешно", "\0");
     fclose(in), fclose(out);
 }
 
@@ -199,6 +221,7 @@ void search (){
     struct students *iterator = students_head;
     puts("Введите фамилию:");
     scanf("%s", surname);
+    print_log(login, "CCC search_student", surname);
     for (int i = 0; i < students_struct_size; i++){
         if (strcmp(surname, iterator->second_name) == 0) {
             printf("%s %s %s %s %s %s\n", iterator->numb, iterator->second_name, iterator->first_name,
@@ -207,8 +230,13 @@ void search (){
         }
         iterator = iterator->next;
     }
-    if (found == 0)
-        printf("Студента с фамилией %s не найдено\n", surname);
+    if (found == 0) {
+        char ar_to_write[AR_SIZE] = "Студента с фамилией ";
+        strcat(ar_to_write, surname);
+        strcat(ar_to_write, " не найдено\n");
+        printf("WWW Студента с фамилией %s не найдено ", surname);
+        print_log(login, ar_to_write, "\0");
+    }
 }
 
 //Поиск по номеру зачетки
@@ -219,12 +247,15 @@ void search_id (){
     char *isbn, *number, *isbn_in_books, *date;
     puts("Введите номер зачетки");
     if (scanf("%s", id)){
+        print_log(login, "CCC search_student_id", id);
         if ((check = fopen("student_books.csv", "r")) == NULL){
             fprintf(stderr, "Не удалось открыть файл books.csv");
+            print_log(login, "EEE Не удалось открыть файл books.csv", "\0");
             exit(EXIT_FAILURE);
         }
         if ((f = fopen("books.csv", "r")) == NULL){
             fprintf(stderr, "Не удалось открыть файл books.csv");
+            print_log(login, "EEE Не удалось открыть файл books.csv", "\0");
             exit(EXIT_FAILURE);
         }
         while (fgets(info, SIZE, check)){
@@ -248,8 +279,10 @@ void search_id (){
         fclose(f);
         fclose(check);
     }
-    else
+    else {
         puts("Неправильный ввод");
+        print_log(login, "WWW Неправильный ввод", "\0");
+    }
 }
 
 //функция считывания данных из файла, разделеныных точкой с запятой
