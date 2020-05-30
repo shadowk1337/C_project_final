@@ -9,23 +9,23 @@
 #define SIZE 600
 #define TSIZE 100
 
-struct students {
+typedef struct students {
     char numb[TSIZE];
     char second_name[TSIZE], first_name[TSIZE], patr[TSIZE];
     char faculty[TSIZE], spec[TSIZE];
     struct students *next;
-};
+}Students;
 
-extern struct students *students_head;
+extern Students *students_head;
 extern int students_struct_size;
 extern char login[TSIZE];
 
-void fill (struct students * p, char s[SIZE]);
+void fill (Students * p, char s[SIZE]);
 
 //Добавление
 void add_student(){
     FILE *f;
-    struct students *current, *iterator;
+    Students *current, *iterator;
     int i = 0, j, find = 0;
     int punct_count = 0;
     char info[SIZE], first_word[TSIZE];
@@ -63,7 +63,7 @@ void add_student(){
         iterator = iterator->next;
     }
     students_struct_size++;
-    current = (struct students*)malloc(sizeof(struct students));
+    current = (Students*)malloc(sizeof(Students));
     fill(current, info);
     fprintf(f, "%s", info);
     fclose(f);
@@ -77,7 +77,7 @@ void delete_student (){
     FILE *f, *check;
     char *id = (char *)malloc(7 * sizeof(char));
 
-    struct students *iterator1 = students_head, *prev, *iterator2;
+    Students *iterator1 = students_head, *prev, *iterator2;
     char number[TSIZE], first_word[TSIZE];
     char info[SIZE];
     if ((check = fopen("student_books.csv", "r")) == NULL){
@@ -183,7 +183,7 @@ void recovery(){
     int ch;
     char filename[TSIZE];
     char str[SIZE];
-    struct students *current;
+    Students *current;
     FILE *in, *out;
     students_struct_size = 0;
     puts("Введите название файла бэкапа (Пример: students_15.05.2020_17:35:27.csv):");
@@ -206,7 +206,7 @@ void recovery(){
     }
     fseek(in, 0L, SEEK_SET);
     while(fgets(str, SIZE, in)){
-        current = (struct students *)malloc(sizeof(struct students));
+        current = (Students *)malloc(sizeof(Students));
         fill(current, str);
     }
     puts("Операция прошла успешно");
@@ -218,7 +218,7 @@ void recovery(){
 void search (){
     int found = 0;
     char surname[TSIZE];
-    struct students *iterator = students_head;
+    Students *iterator = students_head;
     puts("Введите фамилию:");
     scanf("%s", surname);
     print_log(login, "CCC search_student", surname);
@@ -285,12 +285,32 @@ void search_id (){
     }
 }
 
+void fill (Students * p, char s[SIZE]);
+
+void read_students (){
+    FILE *fp;
+    char  str[SIZE];
+    Students *current;
+    if ((fp = fopen("students.csv", "r")) == NULL) {
+        fprintf(stderr, "Не удалось открыть файл %s", "students.csv");
+        print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
+        exit(EXIT_FAILURE);
+    };
+    while (fgets(str, SIZE, fp)) {
+        students_struct_size++;
+        //реализация связного списка + заполнение данными из файла
+        current = (Students *) malloc(sizeof(Students));
+        fill(current, str);
+    }
+    fclose(fp);
+}
+
 //функция считывания данных из файла, разделеныных точкой с запятой
-void fill (struct students * p, char s[SIZE]){
+void fill (Students * p, char s[SIZE]){
     int i = 0, j = 0;
     int nametag = 0;
     char ar[SIZE];
-    struct students* ps = students_head;
+    Students* ps = students_head;
     char *pa;
 
     if (students_head == NULL) {
