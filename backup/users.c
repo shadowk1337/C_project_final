@@ -21,7 +21,7 @@ int books_struct_size;
 int main() {
     FILE *fp;
     Tnode *p = NULL;
-    char s[SIZE], str[SIZE];
+    char s[SIZE];
     int choice, terminate = 0;
     int vip, comeback = 1;
     if ((fp = fopen("users.csv", "r")) == NULL) {
@@ -29,6 +29,8 @@ int main() {
         print_log("unauthorized", "EEE Не удалось открыть файл users.csv", "\0");
         exit(EXIT_FAILURE);
     }
+    read_students();
+    read_books();
     while (fgets(s, SIZE, fp)) {
         p = addtree(p, s);
     }
@@ -55,19 +57,6 @@ int main() {
         }
         //1;0
         if ((account->edit_students == 1 && account->edit_books == 0) || vip == 1) {
-            struct students *current;
-            if ((fp = fopen("students.csv", "r")) == NULL) {
-                fprintf(stderr, "Не удалось открыть файл %s", "students.csv");
-                print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
-                exit(EXIT_FAILURE);
-            };
-            while (fgets(str, SIZE, fp)) {
-                students_struct_size++;
-                //реализация связного списка + заполнение данными из файла
-                current = (struct students *) malloc(sizeof(struct students));
-                fill(current, str);
-            }
-            fclose(fp);
             puts("Выберите операцию:\n"
                  "1)Добавить студента\n"
                  "2)Удалить студента по номеру зачетной книжки\n"
@@ -133,24 +122,19 @@ int main() {
                 printf("> ");
             }
         } else if ((account->edit_students == 0 && account->edit_books == 1) || vip == 2) {
-            struct books *current;
-            if ((fp = fopen("books.csv", "r")) == NULL) {
-                fprintf(stderr, "Не удалось открыть файл books.csv\n");
-                print_log(login, "EEE Не удалось открыть файл books.csv", "\0");
-                exit(EXIT_FAILURE);
-            }
-            while (fgets(str, SIZE, fp)) {
-                books_struct_size++;
-                current = (struct books *) malloc(sizeof(struct books));
-                fill_books(current, str);
-            }
             puts("Выберите операцию:\n"
                  "1)Добавить книгу\n"
                  "2)Удалить книгу\n"
                  "3)Просмотр информации о книге\n"
                  "4)Вывести таблицу книг\n"
                  "5)Поиск по ISBN\n"
-                 "6)Завершить программу");
+                 "6)Редакитровать книгу\n"
+                 "7)Выдача книги\n"
+                 "8)Сдача книги\n"
+                 "9)Изменить количество книг\n"
+                 "10)Бэкап\n"
+                 "11)Восстановление\n"
+                 "12)Завершить программу");
             if (vip == 2)
                 puts("0)Вернуться в меню выбора");
             printf("> ");
@@ -163,7 +147,7 @@ int main() {
                         break;
                     case 2:
                         print_log(login, "delete_book", "\0");
-                        delete_book();
+                        delete_book_public();
                         break;
                     case 3:
                         print_log(login, "search_book", "\0");
@@ -178,6 +162,25 @@ int main() {
                         search_isbn();
                         break;
                     case 6:
+                        print_log(login, "redact_book", "\0");
+                        redact_book();
+                        break;
+                    case 7:
+                        issuance_book();
+                        break;
+                    case 8:
+                        take_book();
+                        break;
+                    case 9:
+                        change_amount();
+                        break;
+                    case 10:
+                        books_backup();
+                        break;
+                    case 11:
+                        books_recovery();
+                        break;
+                    case 12:
                         print_log(login, "termianate_book_program", "\0");
                         print_log(login, "SSS Работа программы завершена", "\0");
                         terminate = 1;
@@ -197,7 +200,13 @@ int main() {
                      "3)Просмотр информации о книге\n"
                      "4)Вывести таблицу книг\n"
                      "5)Поиск по ISBN\n"
-                     "6)Завершить программу");
+                     "6)Редакитровать книгу\n"
+                     "7)Выдача книги\n"
+                     "8)Сдача книги\n"
+                     "9)Изменить количество книг\n"
+                     "10)Бэкап\n"
+                     "11)Восстановление\n"
+                     "12)Завершить программу");
                 if (vip == 2)
                     puts("0)Вернуться в меню выбора");
                 printf("> ");
