@@ -21,22 +21,20 @@ int books_struct_size;
 int main() {
     FILE *fp;
     Tnode *p = NULL;
-    char s[SIZE], str[SIZE];
-    int choice, terminate = 0;
-    int vip, comeback = 1;
-    if ((fp = fopen("users.csv", "r")) == NULL) {
-        fprintf(stderr, "Не удалось открыть файл users.csv");
-        print_log("unauthorized", "EEE Не удалось открыть файл users.csv", "\0");
-        exit(EXIT_FAILURE);
-    }
-    while (fgets(s, SIZE, fp)) {
+    char s[SIZE];
+    int choice, terminate = 0; // переменные для обозначения выбора и заврешения программы
+    int vip, comeback = 1; // vip - выбор меню для пользователя (1 и 2) comeback - возвращение в меню выбора для суперпользователя
+    fp = open_file("users.csv", "r");
+    read_students(); // считывание данных из файла students.csv в односвязный список
+    read_books(); // считывание данных из файла books.csv в односвязный список
+    while (fgets(s, SIZE, fp)) { // добавление информации об аккаунтах из файла users.csv в бинарное дерево
         p = addtree(p, s);
     }
     fclose(fp);
-    while (auth(p) != 1);
+    while (auth(p) != 1); // пока не введены корректные логие и пароль
     while (comeback == 1) {
         comeback = 0, terminate = 0;
-        if (account->edit_students == 1 && account->edit_books == 1) {
+        if (account->edit_students == 1 && account->edit_books == 1) { // функция для суперпользователя
             puts("Выберите, что редактировать:\n"
                  "1)Студенты\n"
                  "2)Книги");
@@ -53,32 +51,8 @@ int main() {
                 }
             }
         }
-        //1;0
-        if ((account->edit_students == 1 && account->edit_books == 0) || vip == 1) {
-            struct students *current;
-            if ((fp = fopen("students.csv", "r")) == NULL) {
-                fprintf(stderr, "Не удалось открыть файл %s", "students.csv");
-                print_log(login, "EEE Не удалось открыть файл students.csv", "\0");
-                exit(EXIT_FAILURE);
-            };
-            while (fgets(str, SIZE, fp)) {
-                students_struct_size++;
-                //реализация связного списка + заполнение данными из файла
-                current = (struct students *) malloc(sizeof(struct students));
-                fill(current, str);
-            }
-            fclose(fp);
-            puts("Выберите операцию:\n"
-                 "1)Добавить студента\n"
-                 "2)Удалить студента по номеру зачетной книжки\n"
-                 "3)Бэкап\n"
-                 "4)Восстановить базу из файла бэкапа\n"
-                 "5)Поиск по фамилии\n"
-                 "6)Поиск по номеру зачетки\n"
-                 "7)Завершить работу программы");
-            if (vip == 1)
-                puts("0)Вернуться в меню выбора");
-            printf("> ");
+        if ((account->edit_students == 1 && account->edit_books == 0) || vip == 1) { // функции для 1;0
+            students_menu(vip);
             while (scanf("%d", &choice)) {
                 getchar();
                 switch (choice) {
@@ -120,40 +94,10 @@ int main() {
                 }
                 if (terminate)
                     break;
-                puts("\nВыберите операцию:\n"
-                     "1)Добавить студента\n"
-                     "2)Удалить студента по номеру зачетной книжки\n"
-                     "3)Бэкап\n"
-                     "4)Восстановить базу из файла бэкапа\n"
-                     "5)Поиск по фамилии\n"
-                     "6)Поиск по номеру зачетки\n"
-                     "7)Завершить работу программы");
-                if (vip == 1)
-                    puts("0)Вернуться в меню выбора");
-                printf("> ");
+                students_menu(vip);
             }
-        } else if ((account->edit_students == 0 && account->edit_books == 1) || vip == 2) {
-            struct books *current;
-            if ((fp = fopen("books.csv", "r")) == NULL) {
-                fprintf(stderr, "Не удалось открыть файл books.csv\n");
-                print_log(login, "EEE Не удалось открыть файл books.csv", "\0");
-                exit(EXIT_FAILURE);
-            }
-            while (fgets(str, SIZE, fp)) {
-                books_struct_size++;
-                current = (struct books *) malloc(sizeof(struct books));
-                fill_books(current, str);
-            }
-            puts("Выберите операцию:\n"
-                 "1)Добавить книгу\n"
-                 "2)Удалить книгу\n"
-                 "3)Просмотр информации о книге\n"
-                 "4)Вывести таблицу книг\n"
-                 "5)Поиск по ISBN\n"
-                 "6)Завершить программу");
-            if (vip == 2)
-                puts("0)Вернуться в меню выбора");
-            printf("> ");
+        } else if ((account->edit_students == 0 && account->edit_books == 1) || vip == 2) { // функции для 0;1
+            books_menu(vip);
             while (scanf("%d", &choice)) {
                 getchar();
                 switch (choice) {
@@ -163,7 +107,7 @@ int main() {
                         break;
                     case 2:
                         print_log(login, "delete_book", "\0");
-                        delete_book();
+                        delete_book_public();
                         break;
                     case 3:
                         print_log(login, "search_book", "\0");
@@ -178,6 +122,28 @@ int main() {
                         search_isbn();
                         break;
                     case 6:
+                        print_log(login, "redact_book", "\0");
+                        redact_book();
+                        break;
+                    case 7:
+                        issuance_book();
+                        break;
+                    case 8:
+                        take_book();
+                        break;
+                    case 9:
+                        change_amount();
+                        break;
+                    case 10:
+                        books_backup();
+                        break;
+                    case 11:
+                        books_recovery();
+                        break;
+                    case 12:
+                        search_by_author();
+                        break;
+                    case 13:
                         print_log(login, "termianate_book_program", "\0");
                         print_log(login, "SSS Работа программы завершена", "\0");
                         terminate = 1;
@@ -191,19 +157,10 @@ int main() {
                 }
                 if (terminate)
                     break;
-                puts("\nВыберите операцию:\n"
-                     "1)Добавить книгу\n"
-                     "2)Удалить книгу\n"
-                     "3)Просмотр информации о книге\n"
-                     "4)Вывести таблицу книг\n"
-                     "5)Поиск по ISBN\n"
-                     "6)Завершить программу");
-                if (vip == 2)
-                    puts("0)Вернуться в меню выбора");
-                printf("> ");
+                books_menu(vip);
             }
         }
-        else {
+        else { // функции для 0;0
             puts("Аккаунт не имеет привилегий");
             print_log("unauthorized", "SSS Аккаунт не имеет привилегий", "\0");
         }
@@ -212,10 +169,10 @@ int main() {
 
 Users *find_acc (Tnode *ps, char *s1, char *s2, int *status);
 
-int auth(Tnode *ps){
-    int *status = (int *)malloc(sizeof(int));
-    Users *acc_info = (Users *)malloc(sizeof(Users));
+int auth(Tnode *ps){ // аутентификация пользователя
+    int *status = (int *)malloc(sizeof(int)); // переменная для обозначения был ли найден аккаунт (1 - найден, 0 - нет)
     *status = 0;
+    Users *acc_info = (Users *)malloc(sizeof(Users));
     char password[TSIZE];
     puts("Введите логин:");
     scanf("%s", login);
@@ -225,7 +182,7 @@ int auth(Tnode *ps){
     if (*status) {
         puts("Вы авторизированы");
         print_log(login, "================ SSS Вы авторизованы ================", "\0");
-        account = acc_info;
+        account = acc_info; // запись данных аккаунта в глобальную переменную
         return 1;
     }
     puts("Неправильный логин/пароль");
@@ -233,7 +190,7 @@ int auth(Tnode *ps){
     return 0;
 }
 
-Users *find_acc (Tnode *ps, char *s1, char *s2, int *status){
+Users *find_acc (Tnode *ps, char *s1, char *s2, int *status){ // проверка на соответсвие логин + пароль (поиск в бинарном дереве)
     static Users *login_info;
     if (ps != NULL){
         find_acc(ps->left, s1, s2, status);
