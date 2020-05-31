@@ -1,5 +1,3 @@
-#ifndef HOM1_BINARY_TREE_H
-#define HOM1_BINARY_TREE_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,5 +79,3 @@ void fill_tree (Tnode *ps, char *s){
         }
     }
 }
-
-#endif
