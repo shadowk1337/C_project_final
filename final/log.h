@@ -7,12 +7,14 @@
 #include <time.h>
 #define AR_SIZE 200
 
+FILE *open_file(char *filename, char *func);
+
 extern char login[TSIZE];
 
-void print_log(char *login, char *func_name, char *param){
+void print_log(char *login, char *func_name, char *param){ // запись действия в файл логов library.log
     FILE *f;
     char parameter[TSIZE];
-    strcpy(parameter, param);
+    strcpy(parameter, param); // создание копии параметра
     char str_to_print[AR_SIZE];
     struct tm *loc_time;
     char time_ar[AR_SIZE];
@@ -20,25 +22,22 @@ void print_log(char *login, char *func_name, char *param){
     loc_time = localtime(&ttime);
     strftime(time_ar, 50, "%d.%m.%Y %H:%M:%S", loc_time);
     for (int i = 0; *(parameter + i); i++ ){
-        if (*(parameter + i) == '\n') {
+        if (*(parameter + i) == '\n') { // удаление символа перевода строки
             *(parameter + i) = '\0';
             break;
         }
     }
-    if ((f = fopen("library.log", "r+")) == NULL){
-        fprintf(stderr, "Не удалось открыть файл library.log");
-        exit(EXIT_FAILURE);
-    }
+    f = open_file("library.log", "r+");
     fseek(f, 0L, SEEK_END);
-    if (strcmp(parameter, "\0")){
-        fprintf(f, "\"%s\";\"%s\";\"%s\";\"%s\"\n", time_ar, login, func_name, parameter);
+    if (strcmp(parameter, "\0")){ // если параметр не является пустой строкой
+        fprintf(f, "\"%s\";\"%s\";\"%s\";\"%s\"\n", time_ar, login, func_name, parameter); // запись в файл
     }
-    else
-        fprintf(f, "\"%s\";\"%s\";\"%s\"\n", time_ar, login, func_name);
+    else // параметр - пустая строка
+        fprintf(f, "\"%s\";\"%s\";\"%s\"\n", time_ar, login, func_name); // запись в файл
     fclose(f);
 }
 
-FILE *open_file(char *filename, char *func){
+FILE *open_file(char *filename, char *func){ // проверка файла
     FILE *f;
     if ((f = fopen(filename, func)) == NULL){
         fprintf(stderr, "Не удалось открыть файл %s", filename);
@@ -84,7 +83,7 @@ void books_menu(int vip){
     printf("> ");
 }
 
-int no_data (int size){
+int no_data (int size){ // есть ли в файле данные
     if (size == 0){
         printf("В читаемом файле нету данных\n--Завершение функции--\n");
         print_log(login, "WWW В читаемом файле нету данных —Завершение функции--", "\0");
