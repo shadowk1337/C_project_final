@@ -106,7 +106,7 @@ int main() {
                         add_book();
                         break;
                     case 2:
-                        print_log(login, "delete_book", "\0");
+                        print_log(login, "delete_book_public", "\0");
                         delete_book_public();
                         break;
                     case 3:
@@ -126,21 +126,27 @@ int main() {
                         redact_book();
                         break;
                     case 7:
+                        print_log(login, "issuance_book", "\0");
                         issuance_book();
                         break;
                     case 8:
+                        print_log(login, "take_book", "\0");
                         take_book();
                         break;
                     case 9:
+                        print_log(login, "change_amount", "\0");
                         change_amount();
                         break;
                     case 10:
+                        print_log(login, "books_backup", "\0");
                         books_backup();
                         break;
                     case 11:
+                        print_log(login, "books_recovery", "\0");
                         books_recovery();
                         break;
                     case 12:
+                        print_log(login, "seaech_by_author", "\0");
                         search_by_author();
                         break;
                     case 13:
@@ -170,8 +176,8 @@ int main() {
 Users *find_acc (Tnode *ps, char *s1, char *s2, int *status);
 
 int auth(Tnode *ps){ // аутентификация пользователя
-    int *status = (int *)malloc(sizeof(int)); // переменная для обозначения был ли найден аккаунт (1 - найден, 0 - нет)
-    *status = 0;
+    int *status = (int *)malloc(sizeof(int));
+    *status = 0; // переменная для обозначения был ли найден аккаунт (1 - найден, 0 - нет)
     Users *acc_info = (Users *)malloc(sizeof(Users));
     char password[TSIZE];
     puts("Введите логин:");
