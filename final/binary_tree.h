@@ -20,24 +20,24 @@ typedef struct tnode{
 extern Users *account;
 void fill_tree (Tnode *ps, char *s);
 
-Tnode *addtree (Tnode *ps, char *s){
+Tnode *addtree (Tnode *ps, char *s){ // добавление узла
     int res;
     char login[SIZE];
     strcpy(login, s);
     strtok(login, " ;");
-    if (ps == NULL){
+    if (ps == NULL){ // если дерево пустое
         ps = (Tnode *)malloc(sizeof(Tnode));
         fill_tree(ps, s);
         ps->left = ps->right = NULL;
     }
-    else if ((res = strcmp(ps->user.login, login)) == 0) {
+    else if ((res = strcmp(login, ps->user.login)) == 0) { // найдены одинаковые пользователи
         fprintf(stderr, "Пользователь %s встречается более одного раза", ps->user.login);
         exit(EXIT_FAILURE);
     }
-    else if (res < 0) {
+    else if (res < 0) { // логин лексиографически меньше
         ps->left = addtree(ps->left, s);
     }
-    else {
+    else { // логин лексиографически больше
         ps->right = addtree(ps->right, s);
     }
     return ps;
@@ -51,7 +51,7 @@ void print_tree (Tnode *ps){
     }
 }
 
-void fill_tree (Tnode *ps, char *s){
+void fill_tree (Tnode *ps, char *s){ // заполнение дерева данными из файла
     FILE *f;
     char *ar;
     ar = (char *)malloc(SIZE * sizeof(char));
