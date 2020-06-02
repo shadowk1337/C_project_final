@@ -19,8 +19,7 @@ extern char login[TSIZE];
 
 void fill (Students * p, char s[SIZE]);
 
-//Добавление
-void add_student(){
+void add_student(){ // добавление студента
     FILE *f;
     Students *current, *iterator;
     int i = 0, j, find = 0;
@@ -64,8 +63,7 @@ void add_student(){
     print_log(login, "SSS Студент добавлен", "\0");
 }
 
-//Удаление
-void delete_student (){
+void delete_student (){ // удаление студента
     int i, j;
     FILE *f, *check;
     char *id = (char *)malloc(7 * sizeof(char));
@@ -73,9 +71,9 @@ void delete_student (){
     Students *iterator1 = students_head, *prev, *iterator2;
     char number[TSIZE], first_word[TSIZE];
     char info[SIZE];
+    int found = 0;
     check = open_file("student_books.csv", "r");
     if (students_struct_size != 0){
-        //проверка номера студента в файле students_books
         puts("Введите номер зачетной книжки:");
         if (scanf("%s", number)){
             print_log(login, "CCC delete_student", number);
@@ -92,6 +90,7 @@ void delete_student (){
             f = open_file("students.csv", "w");
             for (i = 0; i < students_struct_size; i++){
                 if (strcmp(number, iterator1->numb) == 0){
+                    found = 1;
                     if (i == 0 && students_struct_size == 1){
                         students_head = NULL;
                     }
@@ -110,6 +109,10 @@ void delete_student (){
                 }
                 prev = iterator1;
                 iterator1 = iterator1->next;
+            }
+            if (found == 0){
+                puts("Студент не найден");
+                return;
             }
             if (students_head != NULL) {
                 iterator2 = students_head;
@@ -134,8 +137,14 @@ void delete_student (){
     }
 }
 
-//Бэкап
-void backup (){
+void redact_student(){
+    char number[TSIZE];
+    puts("Введите номер зачетной книжки студента");
+    scanf("%s", number);
+
+}
+
+void backup (){ // бэкап
     int ch;
     struct tm *loc_time;
     char time_ar[TSIZE];
@@ -157,8 +166,7 @@ void backup (){
     fclose(in), fclose(out);
 }
 
-//Восстановление содержимого
-void recovery(){
+void recovery(){ // восстановление содержимого из файла бэкапа
     int ch;
     char filename[TSIZE];
     char str[SIZE];
@@ -185,8 +193,7 @@ void recovery(){
     fclose(in), fclose(out);
 }
 
-//Поиск по фамилии
-void search (){
+void search (){ // поиск по фамилии
     int found = 0;
     char surname[TSIZE];
     Students *iterator = students_head;
@@ -212,8 +219,7 @@ void search (){
     }
 }
 
-//Поиск по номеру зачетки
-void search_id (){
+void search_id (){ // поиск по номеру зачетки
     FILE *f, *check;
     char id[TSIZE], info[SIZE];
     char info_books[SIZE];
@@ -252,22 +258,20 @@ void search_id (){
 
 void fill (Students * p, char s[SIZE]);
 
-void read_students (){
+void read_students (){ // заполнение списка данными из файла students.csv
     FILE *fp;
     char  str[SIZE];
     Students *current;
     fp = open_file("students.csv", "r");
     while (fgets(str, SIZE, fp)) {
         students_struct_size++;
-        //реализация связного списка + заполнение данными из файла
-        current = (Students *) malloc(sizeof(Students));
+        current = (Students *) malloc(sizeof(Students)); //реализация связного списка + заполнение данными из файла
         fill(current, str);
     }
     fclose(fp);
 }
 
-//функция считывания данных из файла, разделеныных точкой с запятой
-void fill (Students * p, char s[SIZE]){
+void fill (Students * p, char s[SIZE]){ // функция считывания данных из файла, разделеныных точкой с запятой
     int i = 0, j = 0;
     int nametag = 0;
     char ar[SIZE];
