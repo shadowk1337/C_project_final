@@ -48,6 +48,7 @@ void add_book (){ // добавление книги
 //    printf("%d\n", first_word);
     if (punct_count != 4){
         puts("Должно быть 5 значений\n--Завершение функции--");
+        print_log(login, "WWW Должно быть 5 значений --Завершение функции--", "\0");
         return;
     }
     print_log(login, "CCC add_book", info);
@@ -68,48 +69,54 @@ void add_book (){ // добавление книги
     print_log(login, "SSS Книга добавлена", "\0");
 }
 
-void delete_book(char *number);
+int delete_book(char *number, int access);
 
 void delete_book_public(){ // интерфейс функции удаления пользователя
     FILE *f;
     char number[TSIZE];
     puts("Введите номер ISBN книги:");
-    if (scanf("%s", number))
-        delete_book(number);
+    if (scanf("%s", number)){
+        if (delete_book(number, 1) == 0)
+            return;
+    }
     else{
         fprintf(stderr, "Неправильный ввод\n");
         print_log(login, "WWW Неправильный ввод", "\0");
         exit(EXIT_FAILURE);
     }
+    puts("Книга удалена");
+    print_log(login, "SSS Книга удалена", "\0");
     print_log(login, "CCC delete_book", number);
 }
 
-void delete_book(char *number){ // удаление пользователя
+int delete_book(char *number, int access){ // удаление книги
     FILE *f, *check;
     int i, j;
     char *isbn = (char *)malloc(11 * sizeof(char));
+    int found = 0;
     Books *iterator1 = books_head, *prev, *iterator2;
     char info[SIZE];
     check = open_file("student_books.csv", "r");
-    if (books_struct_size != 0){ // список не пуст
-        while (fgets(info, SIZE, check)) {
-            isbn = strtok(info, ";");
-            if (strcmp(number, isbn) == 0) {
-                printf("Нельзя удалить книгу с номером %s\n", number);
-                print_log(login, "WWW Нельзя удалить книгу с номером ", number);
-                return;
+    if (books_struct_size != 0) { // список не пуст
+        if (access == 1) {
+            while (fgets(info, SIZE, check)) {
+                isbn = strtok(info, ";");
+                if (strcmp(number, isbn) == 0) {
+                    printf("Нельзя удалить книгу с номером %s\n", number);
+                    print_log(login, "WWW Нельзя удалить книгу с номером ", number);
+                    return 0;
+                }
             }
         }
         fclose(check);
         f = open_file("books.csv", "w");
         for (i = 0; i < books_struct_size; i++){ // удаление книги
             if (strcmp(number, iterator1->isbn) == 0){
+                found = 1;
                 if (i == 0 && books_struct_size == 1){ // в файле одна книга
-                    free(books_head);
                     books_head = NULL;
                 }
                 else if (i == 0 && books_struct_size >= 2){ // книга находится в начале списка
-                    free(books_head);
                     books_head = iterator1->next;
                 }
                 else if (i == books_struct_size - 1){ // книга находится в конце списка
@@ -121,12 +128,15 @@ void delete_book(char *number){ // удаление пользователя
                     free(iterator1);
                 }
                 books_struct_size--;
-                puts("Книга удалена");
-                print_log(login, "SSS Книга удалена", "\0");
                 break;
             }
             prev = iterator1;
             iterator1 = iterator1->next;
+        }
+        if (found == 0){
+            puts("Книга не найдена");
+            print_log(login, "WWW Книга не найдена", "\0");
+            return 0;
         }
         if (books_head != NULL) { // печать в файл
             iterator2 = books_head;
@@ -141,8 +151,9 @@ void delete_book(char *number){ // удаление пользователя
     else{
         printf("В читаемом файле нету данных\n--Завершение функции--\n");
         print_log(login, "WWW В читаемом файле нету данных —Завершение функции--", "\0");
-        return;
+        return 0;
     }
+    return 1;
 }
 
 void search_book (){ // поиск книги
@@ -197,13 +208,20 @@ void print_book (){  // вывод таблицы книг
     }
 }
 
+void get_read_book (char *to);
+
 void redact_book (){ // редактирование информации о книге
     FILE *f;
     int flag = 0; // найдена ли книга
     char isbn[TSIZE], info[SIZE];
+    char str[TSIZE]; // массив для считывания
     Books *book = books_head;
+    if (no_data(books_struct_size))
+        return;
+    open_file("books.csv", "r+");
     puts("Введите ISBN книги");
     scanf("%s", isbn);
+    print_log(login, "CCC redact_book", isbn);
     f = open_file("books.csv", "r+");
     for (int i = 0; i < books_struct_size; i++, book = book->next){ // поиск книги в списке
         if (strcmp(book->isbn, isbn) == 0) {
@@ -213,11 +231,36 @@ void redact_book (){ // редактирование информации о к�
     }
     if (flag != 1){
         puts("Такой книги не нашлось");
+        print_log(login, "WWW Такой книги не нашлось", "\0");
         return;
     }
-    delete_book(isbn);
-    getchar();
-    add_book();
+    delete_book(isbn, 0);
+    strcpy(info, isbn);
+    strcat(info, ";");
+    puts("Введите авторов книги");
+    get_read_book(info);
+    print_log(login, "CCC redact_book", info);
+    puts("Введите название книги");
+    get_read_book(info);
+    print_log(login, "CCC redact_book", info);
+    puts("Введите общее количество книг");
+    get_read_book(info);
+    print_log(login, "CCC redact_book", info);
+    sprintf(str, "%d", book->students_count);
+    strcat(info, str);
+    strcat(info, "\n");
+    books_fill(book, info);
+    puts(info);
+    fseek(f, 0L, SEEK_END);
+    fprintf(f, "%s", info);
+    fclose(f);
+}
+
+void get_read_book (char *to){ // получение следующей части строки
+    char str[TSIZE];
+    scanf("%s", str);
+    strcat(to, str);
+    strcat(to, ";");
 }
 
 void search_isbn(){ // поиск по ISBN
@@ -257,14 +300,13 @@ void search_isbn(){ // поиск по ISBN
 
 void fill_file_book ();
 
-// ================================================================================================
-
-void change_amount (){
+void change_amount (){ // поменять общее количество какой-то книги
     Books *book = books_head;
     char isbn[TSIZE];
     int new_size;
     puts("Введите ISBN книги");
     scanf("%s", isbn);
+    print_log(login, "CCC change_amount", isbn);
     for (int i = 0; i < books_struct_size; i++){
         if (strcmp(book->isbn, isbn) == 0){
             puts("Введите новое количество книг");
@@ -276,29 +318,28 @@ void change_amount (){
         book = book->next;
     }
     printf("Книги с номером %s не найдено\n", isbn);
+    print_log(login, "WWW Книги не найдено", isbn);
     return;
 }
 
-// ================================================================================================
-// TASKS 7 & 8
-// ================================================================================================
+char *search_closest_date(); // функция поиска наименьшей даты
 
-
-void issuance_book(){
+void issuance_book(){ // выдача книги
     FILE *fp;
     char isbn[TSIZE];
     char number[TSIZE];
     char info[SIZE];
     char date[TSIZE];
     char *ps = (char *)malloc(sizeof(char) * TSIZE);
-    int book_found = 0;
-    int student_found = 0;
+    int book_found = 0; // найдена ли книга
+    int student_found = 0; // найден ли студент
     Books *book = books_head;
     Students *student = students_head;
     fp = open_file("student_books.csv", "r+");
     puts("Введите ISBN книги");
     scanf("%s", isbn);
-    for (int i = 0; i < books_struct_size; i++){
+    print_log(login, "CCC issuance_book", isbn);
+    for (int i = 0; i < books_struct_size; i++){ // поиск книги по isbn
         if (strcmp(isbn, book->isbn) == 0){
             book_found = 1;
             break;
@@ -307,15 +348,19 @@ void issuance_book(){
     }
     if (book_found == 0){
         puts("Книга не найдена");
+        print_log(login, "WWW книга не найдена", "\0");
         return;
     }
-    if (book->students_count == 0){
+    if (book->students_count == 0){ // если число оставшихся книг == 0
         puts("Книги закончились");
+        printf("Следующую книгу сдадут %s числа\n", search_closest_date());
+        print_log(login, "WWW Книги закончились\nСледующую книгу сдадут", search_closest_date());
         return;
     }
     puts("Введите номер студента");
     scanf("%s", number);
-    for (int i = 0; i < students_struct_size; i++){
+    print_log(login, "CCC issuance_book", number);
+    for (int i = 0; i < students_struct_size; i++){ // поиск студента по номеру
         if (strcmp(number, student->numb) == 0){
             student_found = 1;
             break;
@@ -324,41 +369,45 @@ void issuance_book(){
     }
     if (student_found == 0){
         puts("Студент не найден");
+        print_log(login, "WWW Студет не найден", "\0");
         return;
     }
-    while (fgets(info, SIZE, fp)){
+    while (fgets(info, SIZE, fp)){ // имеет ли студент уже эту книгу
         if (strcmp(ps = strtok(info, ";"), isbn) == 0){
             if (strcmp(ps = strtok(NULL, ";"), number) == 0){
                 puts("У данного студента уже есть такая книга");
+                print_log(login, "WWW У данного студента уже есть такая книга", "\0");
                 return;
             }
         }
     }
     puts("Введите дату сдачи");
     scanf("%s", date);
+    print_log(login, "CCC issuance_book", date);
     fseek(fp, 0L, SEEK_END);
-    fprintf(fp, "%s;%s;%s\n", isbn, number, date);
+    fprintf(fp, "%s;%s;%s\n", isbn, number, date); // печать в файл
     book->students_count--;
     fill_file_book();
     fclose(fp);
 }
 
-void take_book (){
+void take_book (){ // выдача книги
     FILE *fp;
     char isbn[TSIZE];
     char number[TSIZE];
     char info[SIZE];
     char date[TSIZE];
-    char *save[100];
+    char *save[100]; //
     char *ps = (char *)malloc(sizeof(char) * TSIZE);
-    int book_found = 0;
-    int student_found = 0;
+    int book_found = 0; // найдена ли книга
+    int student_found = 0; // найден ли студент
     Books *book = books_head;
     Students *student = students_head;
     fp = open_file("student_books.csv", "r+");
     puts("Введите ISBN книги");
     scanf("%s", isbn);
-    for (int i = 0; i < books_struct_size; i++){
+    print_log(login, "CCC take_book", isbn);
+    for (int i = 0; i < books_struct_size; i++){ // найдена ли книга
         if (strcmp(isbn, book->isbn) == 0){
             book_found = 1;
             break;
@@ -367,11 +416,13 @@ void take_book (){
     }
     if (book_found == 0){
         puts("Книга не найдена");
+        print_log(login, "WWW Книга не найдена", "\0");
         return;
     }
     puts("Введите номер студента");
     scanf("%s", number);
-    for (int i = 0; i < students_struct_size; i++){
+    print_log(login, "CCC take_book", number);
+    for (int i = 0; i < students_struct_size; i++){ // найден ли студент
         if (strcmp(number, student->numb) == 0){
             student_found = 1;
             break;
@@ -380,10 +431,12 @@ void take_book (){
     }
     if (student_found == 0){
         puts("Студент не найден");
+        print_log(login, "WWW Студент не найден", "\0");
         return;
     }
     if (book->students_count == book->books_count){
         puts("Достигнуто макс кол-во книг");
+        print_log(login, "WWW Достигнуто макс кол-во книг", "\0");
         return;
     }
     book->students_count++;
@@ -404,7 +457,7 @@ void take_book (){
     fill_file_book();
 }
 
-void fill_file_book (){
+void fill_file_book (){ // заполнение файла books.csv книгами из списка
     FILE *fp;
     Books *iterator = books_head;
     fp = open_file("books.csv", "w");
@@ -416,11 +469,7 @@ void fill_file_book (){
     fclose(fp);
 }
 
-// ================================================================================================
-// TASK 9
-// ================================================================================================
-
-void books_backup () {
+void books_backup () { // бэкап
     int ch;
     struct tm *loc_time;
     char time_ar[TSIZE];
@@ -440,11 +489,7 @@ void books_backup () {
     fclose(in), fclose(out);
 }
 
-// ================================================================================================
-// TASK 10
-// ================================================================================================
-
-void books_recovery(){
+void books_recovery(){ // восстановление файла бэкапа
     int ch;
     char filename[TSIZE];
     char str[SIZE];
@@ -462,7 +507,7 @@ void books_recovery(){
         putc(ch, in);
     }
     fseek(in, 0L, SEEK_SET);
-    while(fgets(str, SIZE, in)){
+    while(fgets(str, SIZE, in)){ // заполнение списка данными из файла
         current = (Books *)malloc(sizeof(Books));
         books_fill(current, str);
     }
@@ -471,7 +516,7 @@ void books_recovery(){
     fclose(in), fclose(out);
 }
 
-void search_by_author(){
+void search_by_author(){ // поиск книги по именам авторов
     Books *book = books_head;
     char author[TSIZE];
     puts("Введите фамилию автора");
@@ -488,7 +533,7 @@ void search_by_author(){
 
 void books_fill(Books *p, char s[SIZE]);
 
-void read_books(){
+void read_books(){ // заполнение списка данными из файла books.csv
     FILE *fp;
     char str[SIZE];
     struct books *current;
@@ -501,7 +546,7 @@ void read_books(){
     fclose(fp);
 }
 
-void books_fill(Books *p, char s[SIZE]){
+void books_fill(Books *p, char s[SIZE]){ // заполнение списка
     int i = 0, j = 0;
     int nametag = 0;
     char ar[SIZE];
@@ -540,8 +585,44 @@ void books_fill(Books *p, char s[SIZE]){
     }
 }
 
+int date_to_int (char *str);
 
-void inclusionSort (char *ar[], int size){
+char *search_closest_date(){ // поиск наименьшей даты
+    FILE *f;
+    char get_from_file[SIZE];
+    char *ps, *ps_dot1, *ps_dot2;
+    int first = 0;
+    char *min_date = (char *)malloc(sizeof(char) * TSIZE);
+    int date1, date2;
+    f = open_file("student_books.csv", "r");
+    while (fgets(get_from_file, SIZE, f)){
+        ps = strtok(get_from_file, ";");
+        ps = strtok(NULL, ";");
+        ps = strtok(NULL, "\n");
+        if (first == 0){
+            strcpy(min_date, ps);
+            date2 = date_to_int(ps);
+            first++;
+            continue;
+        }
+        date1 = date_to_int(ps);
+        if (date1 < date2){
+            strcpy(min_date, ps);
+            date2 = date1;
+        }
+    }
+    return min_date;
+}
+
+int date_to_int (char *str){ // перевод даты в значение тип int и удаление точек между числами
+    int d, m, y;
+    int date;
+    if (sscanf(str,"%d.%d.%d",&d,&m,&y) == 3)
+        date = y * 10000 + m * 100 + d;
+    return date;
+}
+
+void inclusionSort (char *ar[], int size){ // сортировка вставками
     char value[TSIZE];
     for (int i = 1; i < size; i++){
         strcpy(value, ar[i]);
@@ -557,8 +638,7 @@ void inclusionSort (char *ar[], int size){
     }
 }
 
-//проверка isbn на 10 цифр
-int check_isbn (char *isbn){
+int check_isbn (char *isbn){ // проверка isbn на 10 цифр
     if (strlen(isbn) == 10)
         return 1;
     return 0;
